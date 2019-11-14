@@ -1,4 +1,5 @@
 #include "main.h"
+#include <chrono>
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -54,7 +55,7 @@ void autonomous() {}
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-	int mtrPort = 1;
+	int mtrPort = 1, printLCDRan = 0, time; double vel, pow, tem, tnm; int amp, eff, vol;
 	pros::Controller master(pros::E_CONTROLLER_MASTER);
 	pros::lcd::initialize();
 	pros::Motor mtr(mtrPort);
@@ -63,19 +64,32 @@ void opcontrol() {
 	mtr.set_encoder_units(pros::E_MOTOR_ENCODER_INVALID);
 
 	while (true) {
-		pros::lcd::print(0, "Velocity(RPM): %lf RPM", mtr.get_actual_velocity());
-		pros::lcd::print(1, "Current(mA): %d mA", mtr.get_current_draw());
-		pros::lcd::print(2, "Efficiency(): %ld",(long) mtr.get_efficiency());
-		pros::lcd::print(3, "Power(W): %lf W", mtr.get_power());
-		pros::lcd::print(4, "Temperature(C): %lf C", mtr.get_temperature());
-		pros::lcd::print(5, "Torque(Nm): %lf Nm", mtr.get_torque());
-		pros::lcd::print(6, "Voltage(mV): %ld mV", mtr.get_voltage());
+		time = clock();
+		if (time > printLCDRan)
+		{
+			printLCDRan += 10;
+			vel = mtr.get_actual_velocity();
+			amp = mtr.get_current_draw();
+			eff = (long)mtr.get_efficiency();
+			pow = mtr.get_power();
+			tem = mtr.get_temperature();
+			tnm = mtr.get_torque();
+			vol = mtr.get_voltage();
+			std::cout << clock() << std::endl;
+		}
+		pros::lcd::print(0, "Velocity(RPM): %lf RPM", vel);
+		pros::lcd::print(1, "Current(mA): %d mA", amp);
+		pros::lcd::print(2, "Efficiency(): %ld", eff);
+		pros::lcd::print(3, "Power(W): %lf W", pow);
+		pros::lcd::print(4, "Temperature(C): %lf C", tem);
+		pros::lcd::print(5, "Torque(Nm): %lf Nm", tnm);
+		pros::lcd::print(6, "Voltage(mV): %ld mV", vol);
 
 		if (master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y))
 			mtr.move(master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y));
 		else
 			mtr.move_velocity((master.get_digital(pros::E_CONTROLLER_DIGITAL_UP) - master.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)) * 100);
 
-		pros::delay(250);
+		pros::delay(20);
 	}
 }
